@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+
+# Production
+out/
+
+# Environment variables
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mac OS
+.DS_Store
+
+# Editor directories and files
+.vscode/
+.idea/
+
+# Optional: log files
+logs/
+*.log
+
+# Optional: testing
+coverage/
+
+# Optional: type-checker
+*.tsbuildinfo

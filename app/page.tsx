@@ -2,9 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import PerformanceGraph, { DataPoint } from "@/components/PerformanceGraph";
+import confetti from "canvas-confetti";
 
 export default function HomePage() {
   const [history, setHistory] = useState<DataPoint[]>([]);
+  const [postureHistory, setPostureHistory] = useState("");
+  const [expressionHistory, setExpressionHistory] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -35,27 +38,20 @@ export default function HomePage() {
           body: JSON.stringify({ image: dataUrl }),
         });
         const json = await res.json();
-        console.log("Response:", json);
+
         const posture = JSON.parse(json.posture);
         if (json.notifyPosture) {
-          toast(toastTitle(posture.posture), { description: posture.advice });
+          const postureHistory = `Posture: ${posture.posture}, Score: ${posture.score}, Advice: ${posture.advice}`;
+          setPostureHistory((h) => `${postureHistory}\n${h}`);
+          console.log("🧘", postureHistory);
         }
 
         const expression = JSON.parse(json.expression);
-        if (expression.expression === "focused") {
-          toast("💪 Stay Focused!", {
-            description: expression.advice,
-          });
-        } else if (expression.expression === "emotional") {
-          toast("😊 How Are You Feeling?", {
-            description: expression.advice,
-          });
-        } else if (expression.expression === "neutral") {
-          toast("😐 Neutral Expression", {
-            description: expression.advice,
-          });
+        if (json.notifyExpression) {
+          const expressionHistory = `Expression: ${expression.expression}, Score: ${expression.score}, Advice: ${expression.advice}`;
+          setExpressionHistory((h) => `${expressionHistory}\n${h}`);
+          console.log("❤️", expressionHistory);
         }
-        console.log("Posture result:", json);
 
         setHistory((h) => [
           ...h,
@@ -65,6 +61,53 @@ export default function HomePage() {
             expressionScore: expression.score,
           },
         ]);
+
+        const agentRes = await fetch("/api/agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            posture: posture.score,
+            postureAdvice: posture.advice,
+            expression: expression.score,
+            expressionAdvice: expression.advice,
+            postureHistory,
+            expressionHistory,
+          }),
+        });
+        const agentResult = await agentRes.json();
+        const agentJson = JSON.parse(agentResult.content);
+        const { tool, args } = agentJson;
+
+        console.log(
+          `🤖 Agent chose tool: ${tool}, with args: ${JSON.stringify(args)}`
+        );
+
+        // 3) Dispatch the chosen tool
+        if (tool === "showToast") {
+          toast(args.title, { description: args.message });
+        } else if (tool === "scheduleReminder") {
+          console.log("Scheduling reminder");
+          // parse ISO-8601 duration (e.g. "PT1M")
+          const match = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/.exec(args.when);
+          let delay = 0;
+          if (match) {
+            const [, h = "0", m = "0", s = "0"] = match;
+            delay = +h * 3600e3 + +m * 60e3 + +s * 1e3;
+          }
+          setTimeout(() => {
+            toast("⏰ Reminder", { description: args.message });
+          }, delay);
+        } else if (tool === "confetti") {
+          console.log("🎉 Confetti!");
+          // args.amount is 0–100
+          // scale to particleCount (e.g. max 2000)
+          const count = Math.round((args.amount / 100) * 2000);
+          confetti({
+            particleCount: count,
+            spread: 60,
+            origin: { y: 0.6 },
+          });
+        }
       } catch (err) {
         console.error("API error:", err);
       }

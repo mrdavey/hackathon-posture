@@ -1,8 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {
-  title: "Posture Coach",
-  description: "Real-time posture coach with Groq and Next.js App Router",
+  title: "Hackathon Groq",
+  description: "Real-time coach",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
       <head />
       <body>
         {children}
-        <Toaster position="top-right" />
+        <Toaster position="top-right" expand />
       </body>
     </html>
   );

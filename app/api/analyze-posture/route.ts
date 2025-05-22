@@ -4,14 +4,14 @@ import Groq from "groq-sdk";
 export async function POST(request: Request) {
   const { image } = (await request.json()) as { image: string };
   const imgData = image.replace(/^data:image\/.+;base64,/, "");
-
+  1;
   const client = new Groq({ apiKey: process.env.GROQ_API_KEY! });
   const postureResp = await client.chat.completions.create({
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
     messages: [
       {
         role: "system",
-        content: `You are a posture-analysis assistant. You will recieve a webcam image of a user facing their laptop webcam.
+        content: `You are an opinionated posture-analysis assistant. You will recieve a webcam image of a user facing their laptop webcam.
         Your task is to analyze the user's posture and provide feedback. 
         If they are in a good posture, encourage them to keep it up. If they are in a poor or terrible posture, provide advice on how to improve it.
         Keep your advice short and to the point. Use emojis to make it more engaging.
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     messages: [
       {
         role: "system",
-        content: `You are a facial-emotion expert. You will receive a webcam image of a user facing their laptop webcam.
+        content: `You are an opinionated facial-emotion expert. You will receive a webcam image of a user facing their laptop webcam.
         Your task is to analyze the user's facial emotions and provide analysis. 
         If they are in a neutral or focused expression, encourage them to keep it up. If they are in an emotional expression, provide comforting advice or motivational quotes.
         Keep your advice short and to the point. Use emojis to make it more engaging.

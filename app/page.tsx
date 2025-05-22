@@ -1,8 +1,10 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import PerformanceGraph, { DataPoint } from "@/components/PerformanceGraph";
 
 export default function HomePage() {
+  const [history, setHistory] = useState<DataPoint[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -33,11 +35,36 @@ export default function HomePage() {
           body: JSON.stringify({ image: dataUrl }),
         });
         const json = await res.json();
-        const content = JSON.parse(json.content);
-        if (json.notify) {
-          toast(toastTitle(content.posture), { description: content.advice });
+        console.log("Response:", json);
+        const posture = JSON.parse(json.posture);
+        if (json.notifyPosture) {
+          toast(toastTitle(posture.posture), { description: posture.advice });
+        }
+
+        const expression = JSON.parse(json.expression);
+        if (expression.expression === "focused") {
+          toast("💪 Stay Focused!", {
+            description: expression.advice,
+          });
+        } else if (expression.expression === "emotional") {
+          toast("😊 How Are You Feeling?", {
+            description: expression.advice,
+          });
+        } else if (expression.expression === "neutral") {
+          toast("😐 Neutral Expression", {
+            description: expression.advice,
+          });
         }
         console.log("Posture result:", json);
+
+        setHistory((h) => [
+          ...h,
+          {
+            timestamp: Date.now(),
+            postureScore: posture.score,
+            expressionScore: expression.score,
+          },
+        ]);
       } catch (err) {
         console.error("API error:", err);
       }
@@ -47,10 +74,11 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main
-      style={{ display: "flex", justifyContent: "center", marginTop: "2rem" }}
-    >
+    <main style={{ maxWidth: 700, margin: "2rem auto", textAlign: "center" }}>
       <video ref={videoRef} autoPlay playsInline width={640} height={480} />
+      <div style={{ marginTop: "2rem" }}>
+        <PerformanceGraph data={history} />
+      </div>
     </main>
   );
 }
